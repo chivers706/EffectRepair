@@ -13,7 +13,7 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <file path="/EffectRepair/effect.info"/>
         <javaElement handleIdentifier="=EffectRepair/src"/>
-        <file path="/EffectRepair/.project"/>
         <file path="/EffectRepair/.classpath"/>
+        <file path="/EffectRepair/.project"/>
     </selectedElements>
 </jardesc>
