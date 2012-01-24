@@ -7,6 +7,7 @@ import multitallented.redcastlemedia.bukkit.herostronghold.region.RegionManager;
 import multitallented.redcastlemedia.bukkit.herostronghold.region.RegionType;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
@@ -187,7 +188,11 @@ public class EffectRepair extends Effect {
             Hero hero = null;
             
             RegionManager rm = effect.getPlugin().getRegionManager();
-            Region r = rm.getRegion((event.getClickedBlock().getLocation()));
+            Region r = effect.getContainingRegion(event.getClickedBlock().getLocation());
+            if(r == null) {
+            	return;
+            }
+            
             RegionType rt = rm.getRegionType(r.getType());
             
             //check if region has effect "repair"
