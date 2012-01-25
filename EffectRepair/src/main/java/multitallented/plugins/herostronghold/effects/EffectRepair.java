@@ -198,6 +198,7 @@ public class EffectRepair extends Effect {
             int repairCost = getRepairCost(is);
             if (repairCost == 0) {
                 player.sendMessage(ChatColor.GRAY + "[HeroStronghold] That item isn't something you can repair here.");
+                event.setCancelled(true);
                 return;
             }
             ItemStack cost = new ItemStack(reagent, repairCost);
