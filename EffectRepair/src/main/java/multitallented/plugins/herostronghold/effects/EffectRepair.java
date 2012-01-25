@@ -3,8 +3,6 @@ package main.java.multitallented.plugins.herostronghold.effects;
 import multitallented.redcastlemedia.bukkit.herostronghold.HeroStronghold;
 import multitallented.redcastlemedia.bukkit.herostronghold.effect.Effect;
 import multitallented.redcastlemedia.bukkit.herostronghold.region.Region;
-import multitallented.redcastlemedia.bukkit.herostronghold.region.RegionManager;
-import multitallented.redcastlemedia.bukkit.herostronghold.region.RegionType;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -15,28 +13,21 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.inventory.ItemStack;
 
-import com.herocraftonline.dev.heroes.persistence.Hero;
-/**
- * 
- * @author chivers706
- *
- */
-
 public class EffectRepair extends Effect {
 
     public final HeroStronghold aPlugin;
-    
-	public EffectRepair(HeroStronghold plugin) {
+
+    public EffectRepair(HeroStronghold plugin) {
         super(plugin);
         this.aPlugin = plugin;
         registerEvent(Type.PLAYER_INTERACT, new RepairListener(this), Priority.Highest);
     }
 
-   @Override
+    @Override
     public void init(HeroStronghold plugin) {
         super.init(plugin);
     }
-    
+
     public class RepairListener extends PlayerListener {
 
         private final EffectRepair effect;
@@ -108,6 +99,7 @@ public class EffectRepair extends Effect {
             int amt = 0;
             switch (mat) {
                 case BOW:
+                case FISHING_ROD:
                     amt = (int) ((is.getDurability() / (double) mat.getMaxDurability()) * 2.0);
                     return amt < 1 ? 1 : amt;
                 case LEATHER_BOOTS:
@@ -174,39 +166,31 @@ public class EffectRepair extends Effect {
             }
         }
 
-
-		@Override
+        @Override
         public void onPlayerInteract(PlayerInteractEvent event) {
             if (event.isCancelled() || !event.getClickedBlock().getType().equals(Material.IRON_BLOCK)) {
                 return;
             }
             
+            Region r = effect.getContainingRegion(event.getClickedBlock().getLocation());
+            if (r == null) {
+                return;
+            }
+            
+            if (effect.regionHasEffect(effect.aPlugin.getRegionManager().getRegionType(r.getType()).getEffects(), "repair") == 0) {
+                return;
+            }
+            
+            
             Player player = event.getPlayer();
+            
+            if (!r.isMember(player.getName()) && !r.isOwner(player.getName())) {
+                return;
+            }
+            
+            
             ItemStack is = player.getItemInHand();
             Material reagent = getRequiredReagent(is.getType());
-            Hero hero = null;
-            
-            RegionManager rm = effect.getPlugin().getRegionManager();
-            Region r = effect.getContainingRegion(event.getClickedBlock().getLocation());
-            if(r == null) {
-                return;
-            }
-            RegionType rt = rm.getRegionType(r.getType());
-            
-            //check if region has effect "repair"
-            if(effect.regionHasEffect(rt.getEffects(), "repair") == 0) {
-                return;
-            }
-            
-            //TODO check if the clicked block is in a region
-            
-            //check if the player is a member or owner of the region
-            if (!effect.isOwnerOfRegion(player, (event.getClickedBlock().getLocation())) && !effect.isMemberOfRegion(player, (event.getClickedBlock().getLocation())) && hero == null) {
-                return;
-            } else if (hero != null && !rt.containsFriendlyClass(hero.getHeroClass().getName())) {
-                return;
-            }
-            
             if (is == null) {
                 player.sendMessage(ChatColor.GRAY + "[HeroStronghold] You must hold the item you wish to repair.");
                 return;
@@ -214,29 +198,24 @@ public class EffectRepair extends Effect {
             int repairCost = getRepairCost(is);
             if (repairCost == 0) {
                 player.sendMessage(ChatColor.GRAY + "[HeroStronghold] That item isn't something you can repair here.");
-                event.setCancelled(true);
+                return;
+            }
+            ItemStack cost = new ItemStack(reagent, repairCost);
+            if (!hasReagentCost(player, cost)) {
+                player.sendMessage(ChatColor.GRAY + "[HeroStronghold] You don't have enough "+ reagent.name().toLowerCase().replace("_", " "));
                 return;
             }
             
-            // check if the player has the reagent
-            ItemStack reagentStack = new ItemStack(reagent, getRepairCost(is));
-            if(!hasReagentCost(player, reagentStack) || is.getDurability() == 0)
-            {
-            	event.setCancelled(true);
-            	return;
-            }
-            
-            //remove the item stacks or adjust the amount of the item stacks in the players inventory
+            player.getInventory().remove(cost);
             is.setDurability((short) 0);
-            player.getInventory().removeItem(reagentStack);                   
         }
-        
         protected boolean hasReagentCost(Player player, ItemStack itemStack) {
         	int amount = 0;
         	for(ItemStack stack : player.getInventory().all(itemStack.getType()).values()) {
         		amount += stack.getAmount();
-        		if(amount >= itemStack.getAmount())
+        		if(amount >= itemStack.getAmount()) {
         			return true;
+                        }
         	}
         	return false;
         }
