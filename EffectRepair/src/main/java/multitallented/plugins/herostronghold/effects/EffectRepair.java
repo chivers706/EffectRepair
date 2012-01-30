@@ -96,7 +96,7 @@ public class EffectRepair extends Effect {
 
         private int getRepairCost(ItemStack is) {
             Material mat = is.getType();
-            int amt = 0;
+            int amt = 1;
             switch (mat) {
                 case BOW:
                 case FISHING_ROD:
@@ -207,8 +207,10 @@ public class EffectRepair extends Effect {
                 return;
             }
             
+            String isName = is.toString();
             player.getInventory().remove(cost);
             is.setDurability((short) 0);
+            //player.sendMessage(ChatColor.GRAY + "[HeroStronghold] " + isName + "  repaired");
         }
         protected boolean hasReagentCost(Player player, ItemStack itemStack) {
         	int amount = 0;
